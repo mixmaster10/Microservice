@@ -1,0 +1,251 @@
+version: "3.6"
+services:
+    db:
+        image: "mcr.microsoft.com/mssql/server:2017-latest"
+        ports:
+            - "1434:1433"
+        environment:
+            SA_PASSWORD: "sqladmin123!@#"
+            MSSQL_PID: "Developer"
+            ACCEPT_EULA: "Y"
+    rabbitmq:
+        image: "rabbitmq:3-management"
+        ports:
+          - "5672:5672"
+          - "15672:15672"
+    mailhog:
+        image: mailhog/mailhog
+        ports: 
+          - 1025:1025 # smtp server
+          - 8025:8025 # web ui
+    auditlog-api:
+        image: classifiedads.services.auditlog.api
+        build:
+          context: .
+          dockerfile: ./Services.AuditLog/ClassifiedAds.Services.AuditLog.Api/Dockerfile
+        depends_on:
+          - db
+        environment:
+          ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+          ConnectionStrings__ClassifiedAds: "Server=db;Database=ClassifiedAds.Microservices.AuditLog;User Id=sa;Password=sqladmin123!@#;MultipleActiveResultSets=true"
+          IdentityServerAuthentication__Authority: "http://host.docker.internal:9000"
+          IdentityServerAuthentication__RequireHttpsMetadata: "false"
+          Services__AuditLog__Grpc: ${Services__AuditLog__Grpc}
+          Services__Identity__Grpc: ${Services__Identity__Grpc}
+          Services__Notification__Grpc: ${Services__Notification__Grpc}
+    auditlog-grpc:
+        image: classifiedads.services.auditlog.grpc
+        build:
+          context: .
+          dockerfile: ./Services.AuditLog/ClassifiedAds.Services.AuditLog.Grpc/Dockerfile
+        depends_on:
+          - db
+        environment:
+          ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+          ASPNETCORE_URLS: "https://+"
+          ConnectionStrings__ClassifiedAds: "Server=db;Database=ClassifiedAds.Microservices.AuditLog;User Id=sa;Password=sqladmin123!@#;MultipleActiveResultSets=true"
+          IdentityServerAuthentication__Authority: "http://host.docker.internal:9000"
+          IdentityServerAuthentication__RequireHttpsMetadata: "false"
+          Services__AuditLog__Grpc: ${Services__AuditLog__Grpc}
+          Services__Identity__Grpc: ${Services__Identity__Grpc}
+          Services__Notification__Grpc: ${Services__Notification__Grpc}
+    configuration-api:
+        image: classifiedads.services.configuration.api
+        build:
+          context: .
+          dockerfile: ./Services.Configuration/ClassifiedAds.Services.Configuration.Api/Dockerfile
+        depends_on:
+          - db
+        environment:
+          ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+          ConnectionStrings__ClassifiedAds: "Server=db;Database=ClassifiedAds.Microservices.Configuration;User Id=sa;Password=sqladmin123!@#;MultipleActiveResultSets=true"
+          IdentityServerAuthentication__Authority: "http://host.docker.internal:9000"
+          IdentityServerAuthentication__RequireHttpsMetadata: "false"
+          Services__AuditLog__Grpc: ${Services__AuditLog__Grpc}
+          Services__Identity__Grpc: ${Services__Identity__Grpc}
+          Services__Notification__Grpc: ${Services__Notification__Grpc}
+    identity-api:
+        image: classifiedads.services.identity.api
+        build:
+          context: .
+          dockerfile: ./Services.Identity/ClassifiedAds.Services.Identity.Api/Dockerfile
+        depends_on:
+          - db
+        environment:
+          ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+          ConnectionStrings__ClassifiedAds: "Server=db;Database=ClassifiedAds.Microservices.Identity;User Id=sa;Password=sqladmin123!@#;MultipleActiveResultSets=true"
+          IdentityServerAuthentication__Authority: "http://host.docker.internal:9000"
+          IdentityServerAuthentication__RequireHttpsMetadata: "false"
+          Services__AuditLog__Grpc: ${Services__AuditLog__Grpc}
+          Services__Identity__Grpc: ${Services__Identity__Grpc}
+          Services__Notification__Grpc: ${Services__Notification__Grpc}
+    identity-authserver:
+        image: classifiedads.services.identity.authserver
+        build:
+          context: .
+          dockerfile: ./Services.Identity/ClassifiedAds.Services.Identity.AuthServer/Dockerfile
+        ports:
+          - "9000:80"
+        depends_on:
+          - db
+        environment:
+          ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+          ConnectionStrings__ClassifiedAds: "Server=db;Database=ClassifiedAds.Microservices.Identity;User Id=sa;Password=sqladmin123!@#;MultipleActiveResultSets=true"
+          CookiePolicyOptions__IsEnabled: "true"
+          CookiePolicyOptions__MinimumSameSitePolicy: "Lax"
+          CookiePolicyOptions__Secure: "None"
+          MessageBroker__Provider: "RabbitMQ"
+          MessageBroker__RabbitMQ__HostName: "rabbitmq"
+          Services__AuditLog__Grpc: ${Services__AuditLog__Grpc}
+          Services__Identity__Grpc: ${Services__Identity__Grpc}
+          Services__Notification__Grpc: ${Services__Notification__Grpc}
+    identity-grpc:
+        image: classifiedads.services.identity.grpc
+        build:
+          context: .
+          dockerfile: ./Services.Identity/ClassifiedAds.Services.Identity.Grpc/Dockerfile
+        depends_on:
+          - db
+        environment:
+          ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+          ASPNETCORE_URLS: "https://+"
+          ConnectionStrings__ClassifiedAds: "Server=db;Database=ClassifiedAds.Microservices.Identity;User Id=sa;Password=sqladmin123!@#;MultipleActiveResultSets=true"
+          IdentityServerAuthentication__Authority: "http://host.docker.internal:9000"
+          IdentityServerAuthentication__RequireHttpsMetadata: "false"
+          Services__AuditLog__Grpc: ${Services__AuditLog__Grpc}
+          Services__Identity__Grpc: ${Services__Identity__Grpc}
+          Services__Notification__Grpc: ${Services__Notification__Grpc}
+    notification-api:
+        image: classifiedads.services.notification.api
+        build:
+          context: .
+          dockerfile: ./Services.Notification/ClassifiedAds.Services.Notification.Api/Dockerfile
+        depends_on:
+          - db
+        environment:
+          ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+          ConnectionStrings__ClassifiedAds: "Server=db;Database=ClassifiedAds.Microservices.Notification;User Id=sa;Password=sqladmin123!@#;MultipleActiveResultSets=true"
+          IdentityServerAuthentication__Authority: "http://host.docker.internal:9000"
+          IdentityServerAuthentication__RequireHttpsMetadata: "false"
+          MessageBroker__Provider: "RabbitMQ"
+          MessageBroker__RabbitMQ__HostName: "rabbitmq"
+          Services__AuditLog__Grpc: ${Services__AuditLog__Grpc}
+          Services__Identity__Grpc: ${Services__Identity__Grpc}
+          Services__Notification__Grpc: ${Services__Notification__Grpc}
+    notification-background:
+        image: classifiedads.services.notification.background
+        build:
+          context: .
+          dockerfile: ./Services.Notification/ClassifiedAds.Services.Notification.Background/Dockerfile
+        depends_on:
+          - db
+        environment:
+          ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+          ConnectionStrings__ClassifiedAds: "Server=db;Database=ClassifiedAds.Microservices.Notification;User Id=sa;Password=sqladmin123!@#;MultipleActiveResultSets=true"
+          IdentityServerAuthentication__Authority: "http://host.docker.internal:9000"
+          IdentityServerAuthentication__RequireHttpsMetadata: "false"
+          MessageBroker__Provider: "RabbitMQ"
+          MessageBroker__RabbitMQ__HostName: "rabbitmq"
+          Notification__Email__Provider: "SmtpClient"
+          Notification__Email__SmtpClient__Host: "mailhog"
+          Notification__Email__SmtpClient__Port: "1025"
+          Notification__Sms__Provider: "Fake"
+          Notification__Sms__Twilio__AccountSId: ""
+          Notification__Sms__Twilio__AuthToken: ""
+          Notification__Sms__Twilio__FromNumber: ""
+          Services__AuditLog__Grpc: ${Services__AuditLog__Grpc}
+          Services__Identity__Grpc: ${Services__Identity__Grpc}
+          Services__Notification__Grpc: ${Services__Notification__Grpc}
+    notification-grpc:
+        image: classifiedads.services.notification.grpc
+        build:
+          context: .
+          dockerfile: ./Services.Notification/ClassifiedAds.Services.Notification.Grpc/Dockerfile
+        depends_on:
+          - db
+        environment:
+          ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+          ASPNETCORE_URLS: "https://+"
+          ConnectionStrings__ClassifiedAds: "Server=db;Database=ClassifiedAds.Microservices.Notification;User Id=sa;Password=sqladmin123!@#;MultipleActiveResultSets=true"
+          IdentityServerAuthentication__Authority: "http://host.docker.internal:9000"
+          IdentityServerAuthentication__RequireHttpsMetadata: "false"
+          MessageBroker__Provider: "RabbitMQ"
+          MessageBroker__RabbitMQ__HostName: "rabbitmq"
+          Services__AuditLog__Grpc: ${Services__AuditLog__Grpc}
+          Services__Identity__Grpc: ${Services__Identity__Grpc}
+          Services__Notification__Grpc: ${Services__Notification__Grpc}
+    product-api:
+        image: classifiedads.services.product.api
+        build:
+          context: .
+          dockerfile: ./Services.Product/ClassifiedAds.Services.Product.Api/Dockerfile
+        depends_on:
+          - db
+        environment:
+          ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+          ConnectionStrings__ClassifiedAds: "Server=db;Database=ClassifiedAds.Microservices.Product;User Id=sa;Password=sqladmin123!@#;MultipleActiveResultSets=true"
+          IdentityServerAuthentication__Authority: "http://host.docker.internal:9000"
+          IdentityServerAuthentication__RequireHttpsMetadata: "false"
+          Services__AuditLog__Grpc: ${Services__AuditLog__Grpc}
+          Services__Identity__Grpc: ${Services__Identity__Grpc}
+          Services__Notification__Grpc: ${Services__Notification__Grpc}
+    storage-api:
+        image: classifiedads.services.storage.api
+        build:
+          context: .
+          dockerfile: ./Services.Storage/ClassifiedAds.Services.Storage.Api/Dockerfile
+        depends_on:
+          - db
+        environment:
+          ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+          ConnectionStrings__ClassifiedAds: "Server=db;Database=ClassifiedAds.Microservices.Storage;User Id=sa;Password=sqladmin123!@#;MultipleActiveResultSets=true"
+          IdentityServerAuthentication__Authority: "http://host.docker.internal:9000"
+          IdentityServerAuthentication__RequireHttpsMetadata: "false"
+          MessageBroker__Provider: "RabbitMQ"
+          MessageBroker__RabbitMQ__HostName: "rabbitmq"
+          Storage__Provider: "Local"
+          Storage__Local__Path: "/files"
+          Services__AuditLog__Grpc: ${Services__AuditLog__Grpc}
+          Services__Identity__Grpc: ${Services__Identity__Grpc}
+          Services__Notification__Grpc: ${Services__Notification__Grpc}
+    webapi:
+        image: classifiedads.gateways.webapi
+        build:
+          context: .
+          dockerfile: ./Gateways.WebAPI/ClassifiedAds.Gateways.WebAPI/Dockerfile
+        ports:
+            - "9002:80"
+        depends_on:
+          - db
+        environment:
+          ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+          ReRoutes__0__DownstreamScheme: "http"
+          ReRoutes__0__DownstreamHostAndPorts__0__Host: "product-api"
+          ReRoutes__0__DownstreamHostAndPorts__0__Port: "80"
+          ReRoutes__1__DownstreamScheme: "http"
+          ReRoutes__1__DownstreamHostAndPorts__0__Host: "product-api"
+          ReRoutes__1__DownstreamHostAndPorts__0__Port: "80"
+          ReRoutes__2__DownstreamScheme: "http"
+          ReRoutes__2__DownstreamHostAndPorts__0__Host: "storage-api"
+          ReRoutes__2__DownstreamHostAndPorts__0__Port: "80"
+          ReRoutes__3__DownstreamScheme: "http"
+          ReRoutes__3__DownstreamHostAndPorts__0__Host: "storage-api"
+          ReRoutes__3__DownstreamHostAndPorts__0__Port: "80"
+          ReRoutes__4__DownstreamScheme: "http"
+          ReRoutes__4__DownstreamHostAndPorts__0__Host: "auditlog-api"
+          ReRoutes__4__DownstreamHostAndPorts__0__Port: "80"
+          ReRoutes__5__DownstreamScheme: "http"
+          ReRoutes__5__DownstreamHostAndPorts__0__Host: "auditlog-api"
+          ReRoutes__5__DownstreamHostAndPorts__0__Port: "80"
+          ReRoutes__6__DownstreamScheme: "http"
+          ReRoutes__6__DownstreamHostAndPorts__0__Host: "identity-api"
+          ReRoutes__6__DownstreamHostAndPorts__0__Port: "80"
+          ReRoutes__7__DownstreamScheme: "http"
+          ReRoutes__7__DownstreamHostAndPorts__0__Host: "identity-api"
+          ReRoutes__7__DownstreamHostAndPorts__0__Port: "80"
+          ReRoutes__8__DownstreamScheme: "http"
+          ReRoutes__8__DownstreamHostAndPorts__0__Host: "configuration-api"
+          ReRoutes__8__DownstreamHostAndPorts__0__Port: "80"
+          ReRoutes__9__DownstreamScheme: "http"
+          ReRoutes__9__DownstreamHostAndPorts__0__Host: "configuration-api"
+          ReRoutes__9__DownstreamHostAndPorts__0__Port: "80"

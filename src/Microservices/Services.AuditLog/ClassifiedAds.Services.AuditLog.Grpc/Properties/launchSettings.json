@@ -1,0 +1,12 @@
+﻿{
+  "profiles": {
+    "ClassifiedAds.Services.AuditLog.Grpc": {
+      "commandName": "Project",
+      "launchBrowser": false,
+      "applicationUrl": "https://localhost:5002",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
